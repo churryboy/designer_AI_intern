@@ -2,9 +2,8 @@ services:
   - type: web
     name: designer-ai-server
     runtime: node
-    rootDir: server
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: cd server && npm install --production=false && npm run build
+    startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
         value: production
