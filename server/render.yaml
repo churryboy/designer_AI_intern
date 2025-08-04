@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: designer-ai-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CLAUDE_API_KEY
+        sync: false
+      - key: FIGMA_PERSONAL_ACCESS_TOKEN
+        sync: false
