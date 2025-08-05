@@ -36,7 +36,12 @@ router.get('/files/:fileKey', async (req, res) => {
   const { fileKey } = req.params;
   const { nodeId } = req.query;
   // Use Personal Access Token from environment
-  const accessToken = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
+const accessToken = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
+
+  if (!accessToken) {
+    console.error('FIGMA_PERSONAL_ACCESS_TOKEN is not configured');
+    return res.status(500).json({ error: 'Server misconfiguration: FIGMA_PERSONAL_ACCESS_TOKEN is not set' });
+  }
 
   try {
     console.log(`Fetching Figma file ${fileKey}${nodeId ? ` with node ${nodeId}` : ''}...`);

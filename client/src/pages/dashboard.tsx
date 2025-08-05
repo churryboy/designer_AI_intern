@@ -330,11 +330,13 @@ export default function Dashboard() {
                           status: 'success',
                           duration: 3000,
                         });
-                      } catch (error) {
+} catch (error: any) {
                         console.error('Error loading file:', error);
+const errMsg = error.response?.data?.error || error.response?.data?.details || error.message;
+                        console.error('Error loading file details:', errMsg);
                         toast({
                           title: 'Error loading file',
-                          description: 'Failed to load the Figma file. Make sure you have access to this file.',
+                          description: errMsg,
                           status: 'error',
                           duration: 5000,
                         });
