@@ -47,7 +47,7 @@ app.set('io', io);
 // Start server
 const PORT = process.env.PORT || 3001;
 // Always start the server (Render needs this)
-httpServer.listen(PORT, '0.0.0.0', () => {
+httpServer.listen(Number(PORT), () => {
   console.log(`Server listening on port ${PORT}`);
   console.log(`ENV: ${process.env.NODE_ENV || 'development'}`);
   console.log(`CORS origins: ${allowedOrigins.join(', ')}`);
