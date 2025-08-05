@@ -44,14 +44,14 @@ io.on('connection', socket => {
 });
 app.set('io', io);
 
-// Start server locally
+// Start server
 const PORT = process.env.PORT || 3001;
-if (!process.env.VERCEL) {
-  httpServer.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-    console.log(`ENV: ${process.env.NODE_ENV || 'development'}`);
-  });
-}
+// Always start the server (Render needs this)
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT}`);
+  console.log(`ENV: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`CORS origins: ${allowedOrigins.join(', ')}`);
+});
 
 // Export app for serverless
 export default app;
