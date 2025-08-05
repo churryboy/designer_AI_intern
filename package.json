@@ -19,7 +19,9 @@
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production' && !process.env.CI && !process.env.RENDER) { require('child_process').execSync('husky install') }\""
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production' && !process.env.CI && !process.env.RENDER) { require('child_process').execSync('husky install') }\"",
+    "bump-version": "node scripts/bump-version.js",
+    "deploy": "./scripts/deploy.sh"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

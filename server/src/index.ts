@@ -15,7 +15,7 @@ const app = express();
 const httpServer = createServer(app);
 
 // Version
-const SERVER_VERSION = '1.0.1';
+const SERVER_VERSION = '1.0.2';
 
 // CORS origins from env (comma-separated) or allow all
 const allowedOrigins = process.env.CORS_ORIGIN

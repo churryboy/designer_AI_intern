@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [isChatLoading, setIsChatLoading] = useState(false)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-  const CLIENT_VERSION = '1.0.1' // Version tracking
+  const CLIENT_VERSION = '1.0.2' // Version tracking
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
