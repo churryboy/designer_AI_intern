@@ -10,35 +10,13 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
   const [inputValue, setInputValue] = useState('')
   const [analysisType, setAnalysisType] = useState('all')
-  const [figmaToken, setFigmaToken] = useState<string | null>(null)
   const [currentFile, setCurrentFile] = useState<any>(null)
   const [currentFileKey, setCurrentFileKey] = useState<string | null>(null)
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isChatLoading, setIsChatLoading] = useState(false)
-  const [figmaFiles, setFigmaFiles] = useState<any[]>([])
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
-  // Fetch Figma files on mount (using Personal Access Token)
-  useEffect(() => {
-    fetchFigmaFiles()
-  }, [])
-
-  const fetchFigmaFiles = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/figma/files`)
-      setFigmaFiles(response.data.files || [])
-    } catch (error) {
-      console.error('Error fetching Figma files:', error)
-      toast({
-        title: 'Error fetching files',
-        description: 'Failed to load your Figma files',
-        status: 'error',
-        duration: 5000,
-      })
-    }
-  }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
