@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [isChatLoading, setIsChatLoading] = useState(false)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const CLIENT_VERSION = '1.0.1' // Version tracking
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
@@ -344,6 +345,22 @@ const errMsg = error.response?.data?.error || error.response?.data?.details || e
           </Box>
         </Box>
       </Flex>
+      
+      {/* Version footer */}
+      <Box 
+        position="fixed" 
+        bottom={2} 
+        right={2} 
+        bg="gray.800" 
+        color="white" 
+        px={3} 
+        py={1} 
+        borderRadius="md"
+        fontSize="xs"
+        zIndex={1000}
+      >
+        Client v{CLIENT_VERSION}
+      </Box>
     </>
   )
 }

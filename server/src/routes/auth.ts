@@ -59,7 +59,7 @@ router.get('/figma/callback', async (req, res) => {
     res.redirect(`http://localhost:3000/dashboard?token=${access_token}&user=${encodeURIComponent(JSON.stringify(userResponse.data))}`);
   } catch (error) {
     console.error('Figma OAuth error:', error);
-    res.redirect('http://localhost:3000?error=auth_failed');
+    return res.redirect('http://localhost:3000?error=auth_failed');
   }
 });
 

@@ -74,14 +74,14 @@ router.post('/', async (req, res) => {
       }];
     }
 
-    res.json({ suggestions });
+    return res.json({ suggestions });
   } catch (error: any) {
     console.error('Error analyzing with Claude:', error);
     if (error.response) {
       console.error('Response data:', error.response.data);
       console.error('Response status:', error.response.status);
     }
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Failed to analyze design',
       details: error.response?.data || error.message 
     });

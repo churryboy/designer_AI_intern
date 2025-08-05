@@ -59,10 +59,10 @@ const accessToken = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
     });
 
     console.log('Figma data fetched successfully');
-    res.json(response.data);
+    return res.json(response.data);
   } catch (error: any) {
     console.error('Error fetching Figma file:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({ 
+    return res.status(error.response?.status || 500).json({ 
       error: 'Failed to fetch file',
       details: error.response?.data || error.message,
       status: error.response?.status

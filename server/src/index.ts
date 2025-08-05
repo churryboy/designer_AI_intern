@@ -14,6 +14,9 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
+// Version
+const SERVER_VERSION = '1.0.1';
+
 // CORS origins from env (comma-separated) or allow all
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
@@ -34,7 +37,7 @@ app.use('/api/analyze', analyzeRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: SERVER_VERSION, timestamp: new Date().toISOString() });
 });
 
 // Debug endpoint
