@@ -45,11 +45,14 @@ const accessToken = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
 
   try {
     console.log(`Fetching Figma file ${fileKey}${nodeId ? ` with node ${nodeId}` : ''}...`);
+    console.log('Using Figma token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NO TOKEN');
     
     // If nodeId is provided, fetch only that node
     const url = nodeId 
       ? `${FIGMA_API_BASE}/files/${fileKey}/nodes?ids=${nodeId}`
       : `${FIGMA_API_BASE}/files/${fileKey}`;
+    
+    console.log('Fetching URL:', url);
     
     const response = await axios.get(url, {
       headers: {
@@ -62,10 +65,22 @@ const accessToken = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
     return res.json(response.data);
   } catch (error: any) {
     console.error('Error fetching Figma file:', error.response?.data || error.message);
+    console.error('Error status:', error.response?.status);
+    console.error('File key:', fileKey);
+    
+    // Provide more helpful error messages
+    let errorMessage = 'Failed to fetch file';
+    if (error.response?.status === 404) {
+      errorMessage = 'File not found. Make sure the file exists and you have access to it.';
+    } else if (error.response?.status === 403) {
+      errorMessage = 'Access denied. Check if your Figma token has access to this file.';
+    }
+    
     return res.status(error.response?.status || 500).json({ 
-      error: 'Failed to fetch file',
+      error: errorMessage,
       details: error.response?.data || error.message,
-      status: error.response?.status
+      status: error.response?.status,
+      fileKey: fileKey
     });
   }
 });

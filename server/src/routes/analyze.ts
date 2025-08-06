@@ -8,7 +8,7 @@ const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
 // Analyze design with Claude
 router.post('/', async (req, res) => {
-  const { prompt, figmaJson, analysisType } = req.body;
+  const { prompt, figmaJson, analysisType, conversationHistory } = req.body;
 
   if (!prompt || !figmaJson) {
     return res.status(400).json({ error: 'Prompt and Figma JSON required' });
@@ -16,19 +16,58 @@ router.post('/', async (req, res) => {
 
   try {
     // Prepare the system prompt based on analysis type
-    let systemPrompt = `You are an expert UI/UX designer analyzing Figma designs. 
-    Based on the file structure provided, give general feedback and suggestions.
-    Keep your response concise and practical.
+    let systemPrompt = `You are an expert UI/UX designer with deep knowledge of modern design systems, accessibility standards, and user psychology. You're analyzing a Figma design file.
     
-    Format your response using:
-    • Bullet points for main issues or suggestions
-    • Clear paragraph breaks between different topics
-    • Short, scannable sentences`;
+    IMPORTANT: The data includes detailed information about individual canvases/frames. Each canvas represents a specific screen, component, or design variation. Pay attention to:
+    • Canvas names and their implied purpose (e.g., "Mobile Home", "Desktop Dashboard")
+    • Canvas dimensions to understand device targeting
+    • The hierarchy and types of elements within each canvas
+    • Text content, colors, and visual properties when available
+    
+    Your analysis should be:
+    • Canvas-specific - reference actual canvases by name and their contents
+    • Detail-oriented - notice specific elements, text, dimensions, and visual properties
+    • Creative and insightful - identify patterns across canvases, inconsistencies, and opportunities
+    • Context-aware - understand if this is an app, website, design system, etc.
+    • Varied - each response should explore different aspects or canvases
+    
+    Structure your response with:
+    • Specific observations about individual canvases (mention them by name)
+    • Analysis of elements within those canvases
+    • Comparisons between different canvases when relevant
+    • Actionable recommendations tied to specific canvases
+    • Creative suggestions for improvements
+    
+    Be conversational but professional. Reference specific canvas names and elements.`;
 
     if (analysisType === 'accessibility') {
-      systemPrompt += '\n\nFocus on potential accessibility concerns based on the page and component names.';
+      systemPrompt += `\n\nFocus specifically on:
+      • Color contrast issues based on layer names
+      • Missing accessibility annotations
+      • Component naming that suggests accessibility problems
+      • Potential keyboard navigation issues
+      • Screen reader compatibility concerns`;
     } else if (analysisType === 'layout') {
-      systemPrompt += '\n\nFocus on potential layout and organization issues based on the structure.';
+      systemPrompt += `\n\nFocus specifically on:
+      • Visual hierarchy and information flow
+      • Spacing consistency across components
+      • Grid system usage and alignment
+      • Responsive design considerations
+      • Component organization and reusability`;
+    } else if (analysisType === 'naming') {
+      systemPrompt += `\n\nFocus specifically on:
+      • Layer and component naming conventions
+      • Consistency in naming patterns
+      • Clarity for developer handoff
+      • Organization structure
+      • Suggestions for better naming systems`;
+    } else if (analysisType === 'spacing') {
+      systemPrompt += `\n\nFocus specifically on:
+      • Consistent spacing values (8px grid system?)
+      • Padding and margin patterns
+      • White space usage
+      • Touch target sizes for mobile
+      • Visual breathing room`;
     }
 
     // Call Claude API
@@ -39,11 +78,14 @@ router.post('/', async (req, res) => {
         max_tokens: 1024,
         system: systemPrompt,
         messages: [
+          // Include conversation history if provided
+          ...(conversationHistory || []),
           {
             role: 'user',
-            content: `User request: ${prompt}\n\nFigma design JSON:\n${JSON.stringify(figmaJson, null, 2)}`
+            content: `User request: ${prompt}\n\nFigma design structure:\n${JSON.stringify(figmaJson, null, 2)}\n\nProvide a unique, specific analysis based on what you can infer from this structure. Consider the user's specific question and the actual elements present. Build upon previous observations if this is a continuing conversation.`
           }
-        ]
+        ],
+        temperature: 0.8  // Make responses more creative
       },
       {
         headers: {

@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [isChatLoading, setIsChatLoading] = useState(false)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-  const CLIENT_VERSION = '1.0.2' // Version tracking
+  const CLIENT_VERSION = '1.0.3' // Version tracking
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
@@ -38,50 +38,251 @@ export default function Dashboard() {
     setIsChatLoading(true)
     
     try {
-      // Extract only essential data to reduce payload size
+      // Extract enhanced data for better LLM understanding
       let essentialData;
       
       if (currentFile.nodes) {
         // This is a node-specific response
         const nodeData = Object.values(currentFile.nodes)[0] as any;
+        const node = nodeData?.document;
+        
+        // Helper function to extract deeper structure
+        const extractStructure = (element: any, depth: number = 0): any => {
+          if (!element || depth > 3) return null;
+          
+          const structure: any = {
+            name: element.name,
+            type: element.type,
+            id: element.id,
+            visible: element.visible !== false,
+            locked: element.locked || false,
+          };
+          
+          // Add bounds for frames and components
+          if (element.absoluteBoundingBox) {
+            structure.dimensions = {
+              width: Math.round(element.absoluteBoundingBox.width),
+              height: Math.round(element.absoluteBoundingBox.height)
+            };
+          }
+          
+          // Add fill information
+          if (element.fills && element.fills.length > 0) {
+            structure.fills = element.fills.map((fill: any) => ({
+              type: fill.type,
+              color: fill.color,
+              opacity: fill.opacity
+            })).slice(0, 3);
+          }
+          
+          // Add text content for text nodes
+          if (element.type === 'TEXT' && element.characters) {
+            structure.textContent = element.characters.substring(0, 100) + (element.characters.length > 100 ? '...' : '');
+            structure.fontSize = element.style?.fontSize;
+            structure.fontFamily = element.style?.fontFamily;
+          }
+          
+          // Add stroke information
+          if (element.strokes && element.strokes.length > 0) {
+            structure.hasStrokes = true;
+            structure.strokeWeight = element.strokeWeight;
+          }
+          
+          // Add effect information (shadows, blur, etc)
+          if (element.effects && element.effects.length > 0) {
+            structure.effects = element.effects.map((effect: any) => effect.type);
+          }
+          
+          // Add constraints for responsive design
+          if (element.constraints) {
+            structure.constraints = element.constraints;
+          }
+          
+          // For canvas/frame nodes, extract more detail
+          if ((element.type === 'FRAME' || element.type === 'CANVAS') && element.children) {
+            structure.childrenCount = element.children.length;
+            structure.childrenTypes = {};
+            
+            // Count types of children
+            element.children.forEach((child: any) => {
+              structure.childrenTypes[child.type] = (structure.childrenTypes[child.type] || 0) + 1;
+            });
+            
+            // Get more children for canvases
+            const childLimit = element.type === 'CANVAS' ? 10 : 5;
+            structure.children = element.children.slice(0, childLimit).map((child: any) => 
+              extractStructure(child, depth + 1)
+            ).filter(Boolean);
+          } else if (element.children && element.children.length > 0) {
+            structure.childrenCount = element.children.length;
+            structure.children = element.children.slice(0, 3).map((child: any) => 
+              extractStructure(child, depth + 1)
+            ).filter(Boolean);
+          }
+          
+          return structure;
+        };
+        
         essentialData = {
-          name: nodeData?.document?.name || 'Selected Node',
-          type: nodeData?.document?.type,
-          childrenCount: nodeData?.document?.children?.length || 0,
-          componentId: nodeData?.document?.componentId,
-          // Basic structure info
-          topElements: nodeData?.document?.children?.slice(0, 5).map((child: any) => ({
-            name: child.name,
-            type: child.type,
-            id: child.id
-          })) || []
+          fileType: 'node',
+          name: node?.name || 'Selected Node',
+          type: node?.type,
+          nodeId: currentNodeId,
+          structure: extractStructure(node),
+          componentId: node?.componentId,
+          // Add context about what type of node this is
+          nodeContext: node?.type === 'FRAME' ? 'screen or artboard' : 
+                       node?.type === 'COMPONENT' ? 'reusable component' :
+                       node?.type === 'INSTANCE' ? 'component instance' : 'design element'
         };
       } else {
         // This is a full file response
+        const pages = currentFile.document?.children || [];
+        
+        // Use the same extraction function for pages
+        const extractStructure = (element: any, depth: number = 0): any => {
+          if (!element || depth > 3) return null;
+          
+          const structure: any = {
+            name: element.name,
+            type: element.type,
+            id: element.id,
+            visible: element.visible !== false,
+            locked: element.locked || false,
+          };
+          
+          // Add bounds for frames and components
+          if (element.absoluteBoundingBox) {
+            structure.dimensions = {
+              width: Math.round(element.absoluteBoundingBox.width),
+              height: Math.round(element.absoluteBoundingBox.height)
+            };
+          }
+          
+          // Add fill information
+          if (element.fills && element.fills.length > 0) {
+            structure.fills = element.fills.map((fill: any) => ({
+              type: fill.type,
+              color: fill.color,
+              opacity: fill.opacity
+            })).slice(0, 3);
+          }
+          
+          // Add text content for text nodes
+          if (element.type === 'TEXT' && element.characters) {
+            structure.textContent = element.characters.substring(0, 100) + (element.characters.length > 100 ? '...' : '');
+            structure.fontSize = element.style?.fontSize;
+            structure.fontFamily = element.style?.fontFamily;
+          }
+          
+          // Add stroke information
+          if (element.strokes && element.strokes.length > 0) {
+            structure.hasStrokes = true;
+            structure.strokeWeight = element.strokeWeight;
+          }
+          
+          // Add effect information (shadows, blur, etc)
+          if (element.effects && element.effects.length > 0) {
+            structure.effects = element.effects.map((effect: any) => effect.type);
+          }
+          
+          // Add constraints for responsive design
+          if (element.constraints) {
+            structure.constraints = element.constraints;
+          }
+          
+          // For canvas/frame nodes, extract more detail
+          if ((element.type === 'FRAME' || element.type === 'CANVAS') && element.children) {
+            structure.childrenCount = element.children.length;
+            structure.childrenTypes = {};
+            
+            // Count types of children
+            element.children.forEach((child: any) => {
+              structure.childrenTypes[child.type] = (structure.childrenTypes[child.type] || 0) + 1;
+            });
+            
+            // Get more children for canvases
+            const childLimit = element.type === 'CANVAS' ? 10 : 5;
+            structure.children = element.children.slice(0, childLimit).map((child: any) => 
+              extractStructure(child, depth + 1)
+            ).filter(Boolean);
+          } else if (element.children && element.children.length > 0) {
+            structure.childrenCount = element.children.length;
+            structure.children = element.children.slice(0, 3).map((child: any) => 
+              extractStructure(child, depth + 1)
+            ).filter(Boolean);
+          }
+          
+          return structure;
+        };
+        
         essentialData = {
+          fileType: 'full',
           name: currentFile.name,
-          // Only send page names and basic structure
-          pages: currentFile.document?.children?.slice(0, 3).map((page: any) => ({
-            name: page.name,
-            type: page.type,
-            childrenCount: page.children?.length || 0,
-            // Only first 3 top-level elements per page
-            topElements: page.children?.slice(0, 3).map((child: any) => ({
-              name: child.name,
-              type: child.type,
-              id: child.id
-            }))
-          })) || [],
+          lastModified: currentFile.lastModified,
+          version: currentFile.version,
+          // Enhanced page data with deep extraction
+          pages: pages.map((page: any) => {
+            const pageStructure = extractStructure(page, 0);
+            
+            // Add canvas-specific analysis
+            const canvases = page.children?.filter((child: any) => 
+              child.type === 'FRAME' || child.type === 'CANVAS'
+            ) || [];
+            
+            return {
+              ...pageStructure,
+              // Canvas summary
+              canvasCount: canvases.length,
+              canvases: canvases.slice(0, 5).map((canvas: any) => ({
+                name: canvas.name,
+                id: canvas.id,
+                dimensions: canvas.absoluteBoundingBox ? {
+                  width: Math.round(canvas.absoluteBoundingBox.width),
+                  height: Math.round(canvas.absoluteBoundingBox.height)
+                } : null,
+                childrenCount: canvas.children?.length || 0,
+                // Detect canvas purpose based on name/size
+                possiblePurpose: 
+                  canvas.name.toLowerCase().includes('mobile') || (canvas.absoluteBoundingBox?.width < 500) ? 'mobile screen' :
+                  canvas.name.toLowerCase().includes('tablet') || (canvas.absoluteBoundingBox?.width < 1024) ? 'tablet view' :
+                  canvas.name.toLowerCase().includes('desktop') || (canvas.absoluteBoundingBox?.width >= 1024) ? 'desktop view' :
+                  canvas.name.toLowerCase().includes('component') ? 'component set' :
+                  'general canvas'
+              }))
+            };
+          }),
+          // Component library info
+          components: Object.keys(currentFile.components || {}).slice(0, 10).map(key => ({
+            name: currentFile.components[key].name,
+            description: currentFile.components[key].description || ''
+          })),
           componentsCount: Object.keys(currentFile.components || {}).length,
-          stylesCount: Object.keys(currentFile.styles || {}).length
+          // Style info
+          styles: Object.keys(currentFile.styles || {}).slice(0, 5).map(key => ({
+            name: currentFile.styles[key].name,
+            type: currentFile.styles[key].styleType
+          })),
+          stylesCount: Object.keys(currentFile.styles || {}).length,
+          // Overall file context
+          fileContext: pages.length === 1 ? 'single page design' :
+                       pages.length > 10 ? 'large multi-page project' :
+                       'multi-page design'
         };
       }
+      
+      // Prepare conversation history (last 5 messages)
+      const conversationHistory = messages.slice(-5).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
       
       // Call the analyze API
       const response = await axios.post(`${API_URL}/api/analyze`, {
         prompt: inputValue,
         figmaJson: essentialData,
-        analysisType: analysisType
+        analysisType: analysisType,
+        conversationHistory: conversationHistory
       })
 
       const suggestions = response.data.suggestions
@@ -276,7 +477,10 @@ export default function Dashboard() {
                   onKeyPress={async (e) => {
                     if (e.key === 'Enter') {
                       const url = (e.target as HTMLInputElement).value;
-                      const fileKeyMatch = url.match(/figma\.com\/(file|design)\/([a-zA-Z0-9]+)/);
+                      // Updated regex to handle both old and new Figma URL formats
+                      // Old: /file/abc123/Name
+                      // New: /design/OgXJp6xbHBhr4SZXOP2DRqkC/Name
+                      const fileKeyMatch = url.match(/figma\.com\/(file|design)\/([a-zA-Z0-9]+?)(?:\/|\?)/i);
                       const nodeIdMatch = url.match(/node-id=([0-9-]+)/);
                       
                       if (!fileKeyMatch) {
